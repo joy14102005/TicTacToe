@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Tic Tac Toe</title>
+  <link href="https://fonts.googleapis.com/css?family=Waiting+for+the+Sunrise" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Waiting for the Sunrise', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: #f0f0f5;
+    }
+    h1 {
+      font-size: 40px;
+      color: #000033;
+      margin-bottom: 10px;
+    }
+    #scoreboard {
+      font-size: 20px;
+      color: #000033;
+      margin-bottom: 20px;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 10px;
+      margin-bottom: 20px;
+      transform: rotate(-2deg);
+    }
+    .tile {
+      background: white;
+      border: 2px solid #000033;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #000033;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 5px;
+      transition: transform 0.2s ease-in-out;
+    }
+    .tile:hover {
+      transform: scale(1.05);
+      background: #e6f0ff;
+    }
+    #winner {
+      font-size: 24px;
+      margin-bottom: 15px;
+      height: 30px;
+      color: #000033;
+    }
+    button {
+      padding: 10px 25px;
+      background: #000033;
+      color: white;
+      border: none;
+      border-radius: 20px;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      font-family: 'Waiting for the Sunrise', cursive;
+      margin: 5px;
+    }
+    button:hover {
+      transform: rotate(3deg) scale(1.1);
+      background: #222266;
+    }
+    .fadeBounceIn {
+      animation: fadeBounceIn 0.6s forwards;
+    }
+    @keyframes fadeBounceIn {
+      0% { transform: scale(0.5); opacity: 0; }
+      50% { transform: scale(1.2); opacity: 1; }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <h1>Tic Tac Toe</h1>
+  
+  <!-- Mode Selection -->
+  <div>
+    <button id="mode-human">Human vs Human</button>
+    <button id="mode-computer">Human vs Computer</button>
+  </div>
+  
+  <!-- Scoreboard -->
+  <div id="scoreboard">
+    Player X: <span id="score-x">0</span> | 
+    Player O: <span id="score-o">0</span> | 
+    Computer: <span id="score-computer">0</span>
+  </div>
+  
+  <div id="winner"></div>
+  
+  <!-- Game Board -->
+  <div class="board" id="board">
+    <div class="tile" data-index="0"></div>
+    <div class="tile" data-index="1"></div>
+    <div class="tile" data-index="2"></div>
+    <div class="tile" data-index="3"></div>
+    <div class="tile" data-index="4"></div>
+    <div class="tile" data-index="5"></div>
+    <div class="tile" data-index="6"></div>
+    <div class="tile" data-index="7"></div>
+    <div class="tile" data-index="8"></div>
+  </div>
+  
+  <!-- Reset Buttons -->
+  <div>
+    <button id="reset">Reset Game</button>
+    <button id="reset-scores">Reset Scores</button>
+  </div>
+
+  <script>
+    const tiles = document.querySelectorAll(".tile");
+    const winnerDisplay = document.getElementById("winner");
+    const resetBtn = document.getElementById("reset");
+    const resetScoresBtn = document.getElementById("reset-scores");
+    const scoreXEl = document.getElementById("score-x");
+    const scoreOEl = document.getElementById("score-o");
+    const scoreCompEl = document.getElementById("score-computer");
+    const modeHumanBtn = document.getElementById("mode-human");
+    const modeCompBtn = document.getElementById("mode-computer");
+
+    let currentPlayer = "X";
+    let board = Array(9).fill("");
+    let scoreX = 0, scoreO = 0, scoreComp = 0;
+    let vsComputer = false;
+
+    const winningCombos = [
+      [0,1,2],[3,4,5],[6,7,8],
+      [0,3,6],[1,4,7],[2,5,8],
+      [0,4,8],[2,4,6]
+    ];
+
+    function checkWinner() {
+      for (let combo of winningCombos) {
+        const [a, b, c] = combo;
+        if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+          winnerDisplay.textContent = `${board[a]} Wins! 🎉`;
+          winnerDisplay.classList.add("fadeBounceIn");
+          if (vsComputer && board[a] === "O") {
+            scoreComp++;
+            scoreCompEl.textContent = scoreComp;
+          } else if (board[a] === "X") {
+            scoreX++;
+            scoreXEl.textContent = scoreX;
+          } else {
+            scoreO++;
+            scoreOEl.textContent = scoreO;
+          }
+          tiles.forEach(tile => tile.removeEventListener("click", handleClick));
+          return true;
+        }
+      }
+      if (!board.includes("")) {
+        winnerDisplay.textContent = "It's a Draw! 🤝";
+        winnerDisplay.classList.add("fadeBounceIn");
+        return true;
+      }
+      return false;
+    }
+
+    function handleClick(e) {
+      const index = e.target.dataset.index;
+      if (board[index] === "") {
+        board[index] = currentPlayer;
+        e.target.textContent = currentPlayer;
+        if (!checkWinner()) {
+          currentPlayer = currentPlayer === "X" ? "O" : "X";
+          if (vsComputer && currentPlayer === "O") {
+            setTimeout(computerMove, 500);
+          }
+        }
+      }
+    }
+
+    function computerMove() {
+      // pick a random empty tile (simple AI)
+      let emptyIndices = board.map((v,i) => v === "" ? i : null).filter(v => v !== null);
+      if (emptyIndices.length > 0) {
+        let choice = emptyIndices[Math.floor(Math.random() * emptyIndices.length)];
+        board[choice] = "O";
+        tiles[choice].textContent = "O";
+        if (!checkWinner()) {
+          currentPlayer = "X";
+        }
+      }
+    }
+
+    function resetGame() {
+      board = Array(9).fill("");
+      tiles.forEach(tile => {
+        tile.textContent = "";
+        tile.addEventListener("click", handleClick);
+      });
+      winnerDisplay.textContent = "";
+      winnerDisplay.classList.remove("fadeBounceIn");
+      currentPlayer = "X";
+    }
+
+    function resetScores() {
+      scoreX = 0; scoreO = 0; scoreComp = 0;
+      scoreXEl.textContent = 0;
+      scoreOEl.textContent = 0;
+      scoreCompEl.textContent = 0;
+      resetGame();
+    }
+
+    // Mode buttons
+    modeHumanBtn.addEventListener("click", () => {
+      vsComputer = false;
+      resetGame();
+    });
+    modeCompBtn.addEventListener("click", () => {
+      vsComputer = true;
+      resetGame();
+    });
+
+    tiles.forEach(tile => tile.addEventListener("click", handleClick));
+    resetBtn.addEventListener("click", resetGame);
+    resetScoresBtn.addEventListener("click", resetScores);
+  </script>
+</body>
+</html>
